@@ -1,0 +1,89 @@
+# 광주·전남 스마트 관광 대시보드
+
+광주·전남 관광지와 반려동물 동반 정보, 전남 장애인 편의시설(무장애) 정보를 한 화면에서 탐색하는 Streamlit 대시보드입니다.
+
+## 주요 기능
+
+- 한국관광공사 `areaBasedList2` 관광지 조회 (광주 5 / 전남 38)
+- `detailPetTour2` 반려동물 동반 정보 통합
+- 전남 장애인 편의시설 `getHandicapAmenityList` 통합
+  - 시설명·좌표 기반으로 관광지와 매칭
+  - 매칭된 관광지에 `무장애/휠체어 가능` 표시
+  - 지도에 장애인 편의시설 레이어 표시 (선택)
+  - 편의시설 원본 목록 조회 및 CSV 다운로드
+- 관광지·반려동물·무장애 통합 CSV 다운로드
+- 오픈API 실패 시 샘플 CSV로 자동 폴백
+
+## 데이터 출처
+
+- [한국관광공사 Tour API](https://apis.data.go.kr/B551011/KorService2)
+- [전남광주통합특별시 장애인 편의시설 용도별 안내 데이터](https://www.data.go.kr/data/15074680/openapi.do)
+
+> 장애인 편의시설 API는 관광공사 API와 별도로 **활용신청**이 필요합니다. 활용신청 후 발급된 서비스키를 `.env`에 추가하세요.
+
+## API 필드 정리
+
+`areaBasedList2` 응답 필드의 의미, 앱 컬럼 매핑, 헷갈리는 필드 비교는
+[docs/areaBasedList2_fields.md](docs/areaBasedList2_fields.md) 에 정리되어 있습니다.
+
+## 설치
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## 환경 변수
+
+프로젝트 루트에 `.env` 파일을 만들고 아래 값을 설정합니다. `.env.example`을 복사해서 사용할 수 있습니다.
+
+```dotenv
+TOUR_API_SERVICE_KEY=관광공사_서비스키
+HANDICAP_API_SERVICE_KEY=장애인_편의시설_서비스키
+```
+
+- `HANDICAP_API_SERVICE_KEY`를 생략하면 `TOUR_API_SERVICE_KEY`로 시도합니다.
+  단, 해당 키로 장애인 편의시설 API 활용신청이 되어 있어야 합니다.
+- 선택 사항: `HANDICAP_FETCH_MODE` (`auto`, `all`, `location`, `use`, `detail`, `use_location`, `location_detail`, `full`)
+  - 기본값 `auto`는 전체 조회 → 지역별 → 용도별 → 편의시설별 → 용도+지역 → 지역+편의시설 순으로
+    사용 가능한 방식을 자동 탐색합니다.
+  - `full`은 API가 세 파라미터를 모두 필수로 검증할 때 사용하는 최후 수단입니다.
+    12(용도) × 22(지역) × 20(편의시설) = 5,280회를 호출하므로 **개발계정 일일 한도(1,000)를 초과**할 수 있습니다.
+    운영계정/트래픽 증설이 있는 경우에만 사용하세요.
+
+## 실행
+
+```bash
+streamlit run app.py
+```
+
+## 캐시
+
+- `data/cache/pet_tour_index.json`: 반려동물 상세 인덱스 (24시간)
+- `data/cache/handicap_facilities.json`: 장애인 편의시설 목록 (24시간)
+
+캐시는 Git에 포함되지 않습니다. 최초 실행 시 API 수집에 시간이 걸릴 수 있으며, 이후에는 캐시를 재사용합니다.
+
+## 무장애 정보 통합 방식
+
+1. 장애인 편의시설 API에서 시설 목록을 수집합니다.
+2. 관광지와 시설의 **이름 유사도**와 **좌표 거리**를 함께 비교합니다.
+   - 이름 유사도 0.85 이상 (좌표가 있으면 1km 이내)
+   - 이름 유사도 0.65 이상 + 200m 이내
+   - 50m 이내 + 이름 유사도 0.4 이상
+   - API 원본에 좌표가 없을 때: 이름 유사도 0.65 이상
+3. 매칭된 관광지에만 `wheelchair=True`와 편의시설 상세 정보를 부여합니다.
+4. 매칭되지 않은 관광지는 기존 값을 유지합니다.
+
+> API 문서상 지역 코드는 전남 22개 시·군 기준입니다. 따라서 광주 지역 관광지는 장애인 편의시설 매칭 대상에서 제외됩니다.
+
+## 폴더 구조
+
+- `/data`: 데이터 파일 및 로컬 캐시
+- `/src`: 소스 코드
+- `/tests`: 테스트 코드
+- `/requirements`: 의존성 관리 파일
+- `/docs`: 문서
+- `app.py`: Streamlit 대시보드 본체
+- `handicap.py`: 장애인 편의시설 API 연동 및 매칭 모듈

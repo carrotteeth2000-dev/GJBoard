@@ -1,0 +1,15 @@
+# 환경 변수 (서비스 키)
+.env
+
+# 개인 작업 파일
+이원근.ipynb
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Streamlit / 캐시
+.streamlit/secrets.toml
+data/cache/

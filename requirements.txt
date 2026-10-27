@@ -1,0 +1,7 @@
+streamlit==1.63.0  # 웹 대시보드 프레임워크
+folium==0.20.0  # 인터랙티브 지도 시각화 라이브러리
+streamlit-folium==0.27.4  # Streamlit에서 Folium 지도를 사용하기 위한 라이브러리
+pandas==3.0.5  # 데이터 분석 및 처리 라이브러리
+numpy==2.5.3  # 좌표 거리 계산
+requests==2.34.2  # 공공데이터 오픈API 호출
+python-dotenv==1.2.3  # .env 환경변수 로드
