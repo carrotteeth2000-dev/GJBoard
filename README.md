@@ -34,23 +34,26 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-## 환경 변수
+## Secrets 설정
 
-프로젝트 루트에 `.env` 파일을 만들고 아래 값을 설정합니다. `.env.example`을 복사해서 사용할 수 있습니다.
+서비스 키는 **Streamlit secrets**(`.streamlit/secrets.toml`)로 관리합니다. `.env` 파일은 더 이상 사용하지 않습니다.
 
-```dotenv
-TOUR_API_SERVICE_KEY=관광공사_서비스키
-HANDICAP_API_SERVICE_KEY=장애인_편의시설_서비스키
+1. `.streamlit` 폴더에 `secrets.toml` 파일을 만듭니다.
+2. `.streamlit/secrets.toml.example` 내용을 복사해 실제 키를 입력합니다.
+
+```toml
+TOUR_API_SERVICE_KEY = "관광공사_서비스키"
 ```
 
-- `HANDICAP_API_SERVICE_KEY`를 생략하면 `TOUR_API_SERVICE_KEY`로 시도합니다.
-  단, 해당 키로 장애인 편의시설 API 활용신청이 되어 있어야 합니다.
-- 선택 사항: `HANDICAP_FETCH_MODE` (`auto`, `all`, `location`, `use`, `detail`, `use_location`, `location_detail`, `full`)
-  - 기본값 `auto`는 전체 조회 → 지역별 → 용도별 → 편의시설별 → 용도+지역 → 지역+편의시설 순으로
-    사용 가능한 방식을 자동 탐색합니다.
-  - `full`은 API가 세 파라미터를 모두 필수로 검증할 때 사용하는 최후 수단입니다.
-    12(용도) × 22(지역) × 20(편의시설) = 5,280회를 호출하므로 **개발계정 일일 한도(1,000)를 초과**할 수 있습니다.
-    운영계정/트래픽 증설이 있는 경우에만 사용하세요.
+- `secrets.toml` 은 **Git에 커밋되지 않습니다** (`.gitignore` 등록됨).
+- `TOUR_API_SERVICE_KEY` 가 secrets 에 없으면 OS 환경변수에서 한 번 더 찾습니다.
+- Streamlit Cloud 배포 시에는 **App > Settings > Secrets** 에 같은 내용을 붙여넣으면 됩니다.
+
+```bash
+# 예시 파일 복사 (Windows PowerShell)
+New-Item -ItemType Directory -Force .streamlit | Out-Null
+Copy-Item .streamlit\secrets.toml.example .streamlit\secrets.toml
+```
 
 ## 실행
 

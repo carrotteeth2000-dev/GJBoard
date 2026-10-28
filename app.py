@@ -2,31 +2,37 @@
 
 한국관광공사 Tour API 의 areaBasedList2 단일 엔드포인트만 사용한다.
 - 지역(광주 5 / 전남 38)별 관광지 목록 조회
-- 카테고리(cat3) / 관광지명 필터
+- 지역 / 관광지명 필터
 - Folium 지도 + 목록 + CSV 다운로드
 """
 
 import os
 from html import escape
-from pathlib import Path
 
 import folium
 import pandas as pd
 import requests
 import streamlit as st
-from dotenv import load_dotenv
 from streamlit_folium import st_folium
-
-BASE_DIR = Path(__file__).resolve().parent
 
 # 페이지 설정 (다른 st 명령보다 먼저 호출되어야 함)
 st.set_page_config(page_title="광주·전남 관광지 대시보드 (간략버전)", layout="wide")
 st.title("🗺️ 광주·전남 관광지 대시보드 (간략버전)")
 
-# .env 파일 로드 (TOUR_API_SERVICE_KEY)
-load_dotenv(BASE_DIR / ".env")
 
-SERVICE_KEY = os.getenv("TOUR_API_SERVICE_KEY")
+def get_service_key():
+    """서비스 키를 읽는다. .streamlit/secrets.toml 우선, 없으면 OS 환경변수."""
+    try:
+        key = st.secrets.get("TOUR_API_SERVICE_KEY")
+        if key:
+            return str(key).strip()
+    except Exception:
+        # secrets.toml 이 없거나 문법 오류인 경우 → 환경변수로 폴백
+        pass
+    return (os.getenv("TOUR_API_SERVICE_KEY") or "").strip() or None
+
+
+SERVICE_KEY = get_service_key()
 
 # 유일한 API 엔드포인트
 API_BASE = "https://apis.data.go.kr/B551011/KorService2"
@@ -72,7 +78,7 @@ def fetch_tour_data(area_code, page_no=1):
     """
     if not SERVICE_KEY:
         raise ApiError(
-            "SERVICE_KEY가 설정되지 않았습니다. .env 파일의 "
+            "SERVICE_KEY가 설정되지 않았습니다. .streamlit/secrets.toml 파일의 "
             "TOUR_API_SERVICE_KEY를 확인해주세요."
         )
 

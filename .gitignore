@@ -1,5 +1,7 @@
-# 환경 변수 (서비스 키)
+# 로컬 설정 / 비밀 값
 .env
+.env.local
+.streamlit/secrets.toml
 
 # 개인 작업 파일
 이원근.ipynb
@@ -11,5 +13,4 @@ __pycache__/
 venv/
 
 # Streamlit / 캐시
-.streamlit/secrets.toml
 data/cache/
